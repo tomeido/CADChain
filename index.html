@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CADChain - 브라우저에서 CAD를 그리고 블록체인에 저장하는 플랫폼">
+  <title>CADChain — Draw & Store on Blockchain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⛓️</text></svg>">
+</head>
+<body>
+  <!-- Notifications -->
+  <div id="notifications" class="notifications"></div>
+
+  <!-- Background -->
+  <div class="bg-effects">
+    <div class="bg-orb orb1"></div>
+    <div class="bg-orb orb2"></div>
+  </div>
+
+  <div class="app-layout">
+    <!-- ─── Top Bar ─── -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="logo">
+          <svg class="logo-svg" width="28" height="28" viewBox="0 0 36 36" fill="none">
+            <rect x="2" y="2" width="14" height="14" rx="3" stroke="url(#lg)" stroke-width="2.5"/>
+            <rect x="20" y="2" width="14" height="14" rx="3" stroke="url(#lg)" stroke-width="2.5"/>
+            <rect x="2" y="20" width="14" height="14" rx="3" stroke="url(#lg)" stroke-width="2.5"/>
+            <rect x="20" y="20" width="14" height="14" rx="3" stroke="url(#lg)" stroke-width="2.5"/>
+            <line x1="16" y1="9" x2="20" y2="9" stroke="url(#lg)" stroke-width="2"/>
+            <line x1="9" y1="16" x2="9" y2="20" stroke="url(#lg)" stroke-width="2"/>
+            <line x1="27" y1="16" x2="27" y2="20" stroke="url(#lg)" stroke-width="2"/>
+            <line x1="16" y1="27" x2="20" y2="27" stroke="url(#lg)" stroke-width="2"/>
+            <defs><linearGradient id="lg" x1="0" y1="0" x2="36" y2="36"><stop offset="0%" stop-color="#06d6a0"/><stop offset="100%" stop-color="#118ab2"/></linearGradient></defs>
+          </svg>
+          <span class="logo-name">CADChain</span>
+        </div>
+        <div class="topbar-divider"></div>
+        <div class="stats-row">
+          <div class="stat"><span class="stat-val" id="statBlocks">0</span><span class="stat-lbl">블록</span></div>
+          <div class="stat"><span class="stat-val" id="statDrawings">0</span><span class="stat-lbl">도면</span></div>
+          <div class="stat"><span class="stat-val" id="statShapes">0</span><span class="stat-lbl">총 도형</span></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="shape-count">현재 도형: <strong id="shapeCount">0</strong></span>
+        <button class="save-chain-btn" id="saveToChainBtn" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          블록체인에 저장
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── Main Content ─── -->
+    <div class="main-area">
+
+      <!-- ─── Left Toolbar ─── -->
+      <aside class="toolbar">
+        <div class="tool-section">
+          <span class="tool-section-label">도구</span>
+          <button class="tool-btn active" data-tool="line" title="직선 (Line)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="rect" title="사각형 (Rectangle)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="circle" title="원 (Circle)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="freehand" title="자유 곡선 (Freehand)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c2-4 4-8 7-8s3 6 5 6 3-4 6-8"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="text" title="텍스트 (더블클릭)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          </button>
+          <button class="tool-btn" data-tool="select" title="선택 (Select)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
+          </button>
+        </div>
+
+        <div class="tool-divider"></div>
+
+        <div class="tool-section">
+          <span class="tool-section-label">색상</span>
+          <div class="color-row">
+            <button class="color-swatch active" data-color="#06d6a0" style="--c:#06d6a0" title="Mint"></button>
+            <button class="color-swatch" data-color="#118ab2" style="--c:#118ab2" title="Blue"></button>
+            <button class="color-swatch" data-color="#ef476f" style="--c:#ef476f" title="Pink"></button>
+            <button class="color-swatch" data-color="#ffd166" style="--c:#ffd166" title="Yellow"></button>
+            <button class="color-swatch" data-color="#ffffff" style="--c:#ffffff" title="White"></button>
+            <button class="color-swatch" data-color="#8338ec" style="--c:#8338ec" title="Purple"></button>
+          </div>
+        </div>
+
+        <div class="tool-section">
+          <span class="tool-section-label">두께</span>
+          <input type="range" id="lineWidthRange" class="line-range" min="1" max="8" value="2" step="0.5">
+          <span class="line-width-val" id="lineWidthValue">2px</span>
+        </div>
+
+        <div class="tool-divider"></div>
+
+        <div class="tool-section">
+          <span class="tool-section-label">캔버스</span>
+          <button class="tool-btn icon-btn active" id="toggleGrid" title="그리드 표시">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+          </button>
+          <button class="tool-btn icon-btn active" id="toggleSnap" title="그리드 스냅">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg>
+          </button>
+          <button class="tool-btn icon-btn" id="resetViewBtn" title="뷰 리셋">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          </button>
+        </div>
+
+        <div class="tool-divider"></div>
+
+        <div class="tool-section">
+          <button class="tool-btn icon-btn" id="undoBtn" title="되돌리기 (Ctrl+Z)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+          </button>
+          <button class="tool-btn icon-btn" id="redoBtn" title="다시 실행 (Ctrl+Y)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
+          </button>
+          <button class="tool-btn icon-btn danger" id="clearCanvasBtn" title="전체 삭제">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </aside>
+
+      <!-- ─── Canvas ─── -->
+      <div class="canvas-container" id="canvasContainer">
+        <canvas id="cadCanvas"></canvas>
+        <div class="canvas-hint">Alt+드래그: 이동 · 휠: 줌 · 더블클릭: 텍스트</div>
+      </div>
+
+      <!-- ─── Right Panel ─── -->
+      <aside class="right-panel">
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-panel="explorerPanel">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            블록
+          </button>
+          <button class="panel-tab" data-panel="verifyPanel">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            검증
+          </button>
+        </div>
+
+        <div class="panel-content active" id="explorerPanel">
+          <div class="panel-header">
+            <h3>블록 탐색기</h3>
+            <span class="live-dot"></span>
+          </div>
+          <div class="blockchain-view" id="blockchainView"></div>
+        </div>
+
+        <div class="panel-content" id="verifyPanel">
+          <div class="panel-header">
+            <h3>체인 검증</h3>
+          </div>
+          <button class="verify-btn" id="validateChainBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            전체 체인 검증
+          </button>
+          <div id="validationResult"></div>
+          <div class="panel-footer">
+            <button class="reset-btn" id="resetChainBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              블록체인 초기화
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
