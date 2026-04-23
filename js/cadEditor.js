@@ -40,6 +40,11 @@ class CADEditor {
     // 프리핸드 임시 점들
     this.freehandPoints = [];
 
+    // 렌더링 최적화
+    this.renderRequested = false;
+    this.lastMouseX = 0;
+    this.lastMouseY = 0;
+
     this.setupCanvas();
     this.bindEvents();
     this.render();
@@ -59,7 +64,7 @@ class CADEditor {
     this.canvas.style.width = rect.width + 'px';
     this.canvas.style.height = rect.height + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.render();
+    this.requestRender();
   }
 
   bindEvents() {
@@ -127,7 +132,7 @@ class CADEditor {
     if (this.isPanning) {
       this.offsetX = e.clientX - this.panStartX;
       this.offsetY = e.clientY - this.panStartY;
-      this.render();
+      this.requestRender();
       return;
     }
 
@@ -149,9 +154,10 @@ class CADEditor {
       this.freehandPoints.push({ x, y });
     }
 
-    // 미리보기 렌더
-    this.render();
-    this.drawPreview(x, y);
+    // 미리보기 렌더 요청
+    this.lastMouseX = x;
+    this.lastMouseY = y;
+    this.requestRender();
   }
 
   onMouseUp(e) {
@@ -220,7 +226,7 @@ class CADEditor {
     this.scale *= zoomFactor;
     this.scale = Math.max(0.1, Math.min(5, this.scale));
 
-    this.render();
+    this.requestRender();
   }
 
   onDoubleClick(e) {
@@ -263,6 +269,18 @@ class CADEditor {
   }
 
   // ─── Drawing ────────────────────────────────
+
+  requestRender() {
+    if (this.renderRequested) return;
+    this.renderRequested = true;
+    requestAnimationFrame(() => {
+      this.render();
+      if (this.isDrawing) {
+        this.drawPreview(this.lastMouseX, this.lastMouseY);
+      }
+      this.renderRequested = false;
+    });
+  }
 
   render() {
     const ctx = this.ctx;
