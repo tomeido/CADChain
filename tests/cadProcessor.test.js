@@ -98,3 +98,28 @@ describe('CADProcessor.getExtension', () => {
     expect(CADProcessor.getExtension('my drawing.dxf')).toBe('.dxf');
   });
 });
+
+describe('CADProcessor.formatFileSize', () => {
+  test('returns "0 Bytes" for 0 bytes', () => {
+    expect(CADProcessor.formatFileSize(0)).toBe('0 Bytes');
+  });
+
+  test('formats bytes correctly', () => {
+    expect(CADProcessor.formatFileSize(500)).toBe('500 Bytes');
+  });
+
+  test('formats KB correctly', () => {
+    expect(CADProcessor.formatFileSize(1024)).toBe('1 KB');
+    expect(CADProcessor.formatFileSize(1536)).toBe('1.5 KB');
+  });
+
+  test('formats MB correctly', () => {
+    expect(CADProcessor.formatFileSize(1048576)).toBe('1 MB');
+    expect(CADProcessor.formatFileSize(2569011)).toBe('2.45 MB');
+  });
+
+  test('formats GB correctly', () => {
+    expect(CADProcessor.formatFileSize(1073741824)).toBe('1 GB');
+    expect(CADProcessor.formatFileSize(1610612736)).toBe('1.5 GB');
+  });
+});
