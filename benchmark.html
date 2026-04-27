@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Benchmark</title>
+</head>
+<body>
+    <script>
+        const numShapes = 10000;
+        const shapes = [];
+        for (let i = 0; i < numShapes; i++) {
+            shapes.push({ type: 'rect', x: 10, y: 10, w: 100, h: 100, stroke: '#000000', fill: 'transparent', lineWidth: 2 });
+        }
+
+        const startJson = performance.now();
+        for (let i = 0; i < 100; i++) {
+            JSON.parse(JSON.stringify(shapes));
+        }
+        const endJson = performance.now();
+        const jsonTime = endJson - startJson;
+
+        const startClone = performance.now();
+        for (let i = 0; i < 100; i++) {
+            structuredClone(shapes);
+        }
+        const endClone = performance.now();
+        const cloneTime = endClone - startClone;
+
+        document.body.innerHTML = `JSON.parse: ${jsonTime.toFixed(2)}ms<br>structuredClone: ${cloneTime.toFixed(2)}ms`;
+        console.log(`BENCHMARK_RESULT JSON:${jsonTime.toFixed(2)} CLONE:${cloneTime.toFixed(2)}`);
+    </script>
+</body>
+</html>
