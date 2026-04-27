@@ -1,0 +1,68 @@
+--- js/cadEditor.js
++++ js/cadEditor.js
+@@ -192,6 +192,7 @@
+
+     if (shape) {
+       this.pushUndo();
++      this.cacheDirty = true;
+       this.shapes.push(shape);
+       this.onShapesChanged();
+     }
+@@ -213,6 +214,7 @@
+     const text = prompt('텍스트 입력:');
+     if (text && text.trim()) {
+       this.pushUndo();
++      this.cacheDirty = true;
+       this.shapes.push({
+         type: 'text', x, y, text: text.trim(),
+         stroke: this.strokeColor, fontSize: 14, lineWidth: this.lineWidth
+@@ -232,6 +234,7 @@
+     if (e.key === 'Delete' && this.selectedShapeIndex >= 0) {
+       this.pushUndo();
+       this.shapes.splice(this.selectedShapeIndex, 1);
++      this.cacheDirty = true;
+       this.selectedShapeIndex = -1;
+       this.onShapesChanged();
+       this.render();
+@@ -254,19 +257,21 @@
+     // swap this.ctx and this.offscreenCtx so that drawShape and drawGrid work properly
+     const originalCtx = this.ctx;
+     this.ctx = this.offscreenCtx;
+-
+-    // 그리드
+-    if (this.showGrid) this.drawGrid(w, h);
+-
+-    // 도형 렌더
+-    this.shapes.forEach((shape, idx) => {
+-      if (idx !== this.selectedShapeIndex) {
+-        this.drawShape(shape, false);
+-      }
+-    });
+-
+-    this.ctx = originalCtx;
+-    this.offscreenCtx.restore();
++    try {
++      // 그리드
++      if (this.showGrid) this.drawGrid(w, h);
++
++      // 도형 렌더
++      this.shapes.forEach((shape, idx) => {
++        if (idx !== this.selectedShapeIndex) {
++          this.drawShape(shape, false);
++        }
++      });
++    } finally {
++      this.ctx = originalCtx;
++      this.offscreenCtx.restore();
++    }
+
+     this.cacheDirty = false;
+   }
+@@ -661,7 +666,6 @@
+    * 도형 변경 콜백 (외부에서 오버라이드)
+    */
+   onShapesChanged() {
+     // Override this in app.js
+-    this.cacheDirty = true;
+   }
+ }

@@ -1,0 +1,9 @@
+--- js/cadEditor.js
++++ js/cadEditor.js
+@@ -671,7 +671,6 @@
+    */
+   onShapesChanged() {
+     // Override this in app.js
+-    this.cacheDirty = true;
+   }
+ }

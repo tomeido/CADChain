@@ -666,6 +666,7 @@ class CADEditor {
    */
   onShapesChanged() {
     // Override this in app.js
+    this.cacheDirty = true;
   }
 }
 

@@ -1,0 +1,89 @@
+--- js/cadEditor.js
++++ js/cadEditor.js
+@@ -124,6 +124,7 @@
+
+     if (this.tool === 'select') {
+       this.selectedShapeIndex = this.hitTest(pos.x, pos.y);
++      this.cacheDirty = true;
+       this.render();
+       return;
+     }
+@@ -142,6 +143,7 @@
+     if (this.isPanning) {
+       this.offsetX = e.clientX - this.panStartX;
+       this.offsetY = e.clientY - this.panStartY;
++      this.cacheDirty = true;
+       this.render();
+       return;
+     }
+@@ -239,6 +241,7 @@
+     this.offsetY = my - (my - this.offsetY) * zoomFactor;
+     this.scale *= zoomFactor;
+     this.scale = Math.max(0.1, Math.min(5, this.scale));
++    this.cacheDirty = true;
+
+     this.render();
+   }
+@@ -536,6 +539,7 @@
+
+   undo() {
+     if (this.undoStack.length === 0) return;
++    this.cacheDirty = true;
+     this.redoStack.push(JSON.parse(JSON.stringify(this.shapes)));
+     this.shapes = this.undoStack.pop();
+     this.selectedShapeIndex = -1;
+@@ -546,6 +550,7 @@
+
+   redo() {
+     if (this.redoStack.length === 0) return;
++    this.cacheDirty = true;
+     this.undoStack.push(JSON.parse(JSON.stringify(this.shapes)));
+     this.shapes = this.redoStack.pop();
+     this.selectedShapeIndex = -1;
+@@ -558,6 +563,7 @@
+   setTool(toolName) {
+     this.tool = toolName;
+     this.selectedShapeIndex = -1;
++    this.cacheDirty = true;
+     this.canvas.style.cursor = toolName === 'select' ? 'default' : 'crosshair';
+     this.render();
+   }
+@@ -576,6 +582,7 @@
+
+   toggleGrid() {
+     this.showGrid = !this.showGrid;
++    this.cacheDirty = true;
+     this.render();
+     return this.showGrid;
+   }
+@@ -591,6 +598,7 @@
+     this.shapes = [];
+     this.selectedShapeIndex = -1;
+     this.onShapesChanged();
++    this.cacheDirty = true;
+     this.render();
+   }
+
+@@ -598,6 +606,7 @@
+     this.offsetX = 0;
+     this.offsetY = 0;
+     this.scale = 1;
++    this.cacheDirty = true;
+     this.render();
+   }
+
+@@ -621,6 +630,7 @@
+   deserialize(data) {
+     if (!data || !data.shapes) return;
+     this.pushUndo();
++    this.cacheDirty = true;
+     this.shapes = data.shapes;
+     this.selectedShapeIndex = -1;
+     this.onShapesChanged();
+@@ -653,6 +663,7 @@
+    */
+   onShapesChanged() {
+     // Override this in app.js
++    this.cacheDirty = true;
+   }
+ }
