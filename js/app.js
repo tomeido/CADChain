@@ -269,11 +269,20 @@ class CADChainApp {
 
   updateStats() {
     const chain = this.blockchain.chain;
-    const cadBlocks = chain.filter(b => b.data.type === 'cad_drawing');
+
+    let drawings = 0;
+    let shapes = 0;
+    for (let i = 0; i < chain.length; i++) {
+      const b = chain[i];
+      if (b.data.type === 'cad_drawing') {
+        drawings++;
+        shapes += (b.data.shapeCount || 0);
+      }
+    }
+
     document.getElementById('statBlocks').textContent = chain.length;
-    document.getElementById('statDrawings').textContent = cadBlocks.length;
-    const totalShapes = cadBlocks.reduce((s, b) => s + (b.data.shapeCount || 0), 0);
-    document.getElementById('statShapes').textContent = totalShapes;
+    document.getElementById('statDrawings').textContent = drawings;
+    document.getElementById('statShapes').textContent = shapes;
   }
 
   formatTime(ts) {
