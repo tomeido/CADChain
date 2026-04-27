@@ -488,14 +488,14 @@ class CADEditor {
   // ─── Undo / Redo ────────────────────────────
 
   pushUndo() {
-    this.undoStack.push(JSON.parse(JSON.stringify(this.shapes)));
+    this.undoStack.push(structuredClone(this.shapes));
     this.redoStack = [];
     if (this.undoStack.length > 50) this.undoStack.shift();
   }
 
   undo() {
     if (this.undoStack.length === 0) return;
-    this.redoStack.push(JSON.parse(JSON.stringify(this.shapes)));
+    this.redoStack.push(structuredClone(this.shapes));
     this.shapes = this.undoStack.pop();
     this.selectedShapeIndex = -1;
     this.onShapesChanged();
@@ -504,7 +504,7 @@ class CADEditor {
 
   redo() {
     if (this.redoStack.length === 0) return;
-    this.undoStack.push(JSON.parse(JSON.stringify(this.shapes)));
+    this.undoStack.push(structuredClone(this.shapes));
     this.shapes = this.redoStack.pop();
     this.selectedShapeIndex = -1;
     this.onShapesChanged();
@@ -567,7 +567,7 @@ class CADEditor {
   serialize() {
     return {
       version: 1,
-      shapes: JSON.parse(JSON.stringify(this.shapes)),
+      shapes: structuredClone(this.shapes),
       metadata: {
         shapeCount: this.shapes.length,
         createdAt: new Date().toISOString()
