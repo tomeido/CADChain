@@ -445,6 +445,51 @@ class CADEditor {
 
   // ─── Hit Testing ────────────────────────────
 
+  computeBounds(shape) {
+    switch (shape.type) {
+      case 'line':
+        return {
+          minX: Math.min(shape.x1, shape.x2),
+          maxX: Math.max(shape.x1, shape.x2),
+          minY: Math.min(shape.y1, shape.y2),
+          maxY: Math.max(shape.y1, shape.y2)
+        };
+      case 'rect':
+        return {
+          minX: shape.x,
+          maxX: shape.x + shape.w,
+          minY: shape.y,
+          maxY: shape.y + shape.h
+        };
+      case 'circle':
+        return {
+          minX: shape.cx - shape.r,
+          maxX: shape.cx + shape.r,
+          minY: shape.cy - shape.r,
+          maxY: shape.cy + shape.r
+        };
+      case 'text':
+        return {
+          minX: shape.x,
+          maxX: shape.x + 100, // Approximate width
+          minY: shape.y - 16,  // Approximate height
+          maxY: shape.y
+        };
+      case 'freehand': {
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const p of shape.points) {
+          if (p.x < minX) minX = p.x;
+          if (p.x > maxX) maxX = p.x;
+          if (p.y < minY) minY = p.y;
+          if (p.y > maxY) maxY = p.y;
+        }
+        return { minX, maxX, minY, maxY };
+      }
+      default:
+        return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    }
+  }
+
   hitTest(wx, wy) {
     for (let i = this.shapes.length - 1; i >= 0; i--) {
       if (this.isPointInShape(wx, wy, this.shapes[i])) return i;
@@ -454,6 +499,14 @@ class CADEditor {
 
   isPointInShape(px, py, shape) {
     const margin = 8 / this.scale;
+
+    // Fast bounding box check
+    const b = this.computeBounds(shape);
+    if (px < b.minX - margin || px > b.maxX + margin ||
+        py < b.minY - margin || py > b.maxY + margin) {
+      return false;
+    }
+
     switch (shape.type) {
       case 'line':
         return this.pointToLineDistance(px, py, shape.x1, shape.y1, shape.x2, shape.y2) < margin;
