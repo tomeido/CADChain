@@ -1,4 +1,69 @@
+import { jest } from '@jest/globals';
 import { CADProcessor } from '../js/cadProcessor.js';
+
+describe('CADProcessor.verifyFile', () => {
+  let readFileSpy;
+  let hashBufferSpy;
+
+  beforeEach(() => {
+    readFileSpy = jest.spyOn(CADProcessor, 'readFile');
+    hashBufferSpy = jest.spyOn(CADProcessor, 'hashBuffer');
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test('returns true when actual hash matches expected hash', async () => {
+    const mockFile = { name: 'test.dxf', size: 1024 };
+    const expectedHash = 'abcd1234efgh5678';
+
+    readFileSpy.mockResolvedValue(new ArrayBuffer(8));
+    hashBufferSpy.mockResolvedValue(expectedHash);
+
+    const result = await CADProcessor.verifyFile(mockFile, expectedHash);
+
+    expect(result).toBe(true);
+    expect(readFileSpy).toHaveBeenCalledWith(mockFile);
+    expect(hashBufferSpy).toHaveBeenCalled();
+  });
+
+  test('returns false when actual hash does not match expected hash', async () => {
+    const mockFile = { name: 'test.dxf', size: 1024 };
+    const expectedHash = 'abcd1234efgh5678';
+    const actualHash = '1234abcd5678efgh';
+
+    readFileSpy.mockResolvedValue(new ArrayBuffer(8));
+    hashBufferSpy.mockResolvedValue(actualHash);
+
+    const result = await CADProcessor.verifyFile(mockFile, expectedHash);
+
+    expect(result).toBe(false);
+    expect(readFileSpy).toHaveBeenCalledWith(mockFile);
+    expect(hashBufferSpy).toHaveBeenCalled();
+  });
+
+  test('propagates errors from readFile', async () => {
+    const mockFile = { name: 'error.dxf' };
+    const expectedHash = 'abcd';
+    const error = new Error('Failed to read file');
+
+    readFileSpy.mockRejectedValue(error);
+
+    await expect(CADProcessor.verifyFile(mockFile, expectedHash)).rejects.toThrow(error);
+  });
+
+  test('propagates errors from hashBuffer', async () => {
+    const mockFile = { name: 'test.dxf' };
+    const expectedHash = 'abcd';
+    const error = new Error('Failed to hash');
+
+    readFileSpy.mockResolvedValue(new ArrayBuffer(8));
+    hashBufferSpy.mockRejectedValue(error);
+
+    await expect(CADProcessor.verifyFile(mockFile, expectedHash)).rejects.toThrow(error);
+  });
+});
 
 describe('CADProcessor.getExtension', () => {
   test('returns the extension for a normal filename', () => {
