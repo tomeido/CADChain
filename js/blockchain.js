@@ -3,6 +3,11 @@
  * SHA-256 기반 블록체인 코어 엔진
  */
 
+const hexTable = [];
+for (let i = 0; i < 256; i++) {
+  hexTable.push(i.toString(16).padStart(2, '0'));
+}
+
 class Block {
   constructor(index, timestamp, data, previousHash = '') {
     this.index = index;
@@ -17,12 +22,20 @@ class Block {
    * 블록 데이터를 SHA-256으로 해싱
    */
   async calculateHash() {
-    const content = this.index + this.previousHash + this.timestamp + JSON.stringify(this.data) + this.nonce;
+    if (!this.dataStr) {
+      this.dataStr = JSON.stringify(this.data);
+    }
+    const content = this.index + this.previousHash + this.timestamp + this.dataStr + this.nonce;
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(content);
     const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const hashArray = new Uint8Array(hashBuffer);
+    let hex = '';
+    for(let i = 0; i < hashArray.length; i++) {
+      hex += hexTable[hashArray[i]];
+    }
+    return hex;
   }
 
   /**
@@ -31,6 +44,7 @@ class Block {
    */
   async mineBlock(difficulty) {
     const target = Array(difficulty + 1).join('0');
+    this.dataStr = JSON.stringify(this.data);
     while (true) {
       this.hash = await this.calculateHash();
       if (this.hash.substring(0, difficulty) === target) {
