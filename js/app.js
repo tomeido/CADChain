@@ -220,51 +220,59 @@ class CADChainApp {
    */
   renderBlockchain() {
     const container = document.getElementById('blockchainView');
+    const template = document.getElementById('block-template');
     const blocks = [...this.blockchain.chain].reverse();
 
-    container.innerHTML = blocks.map((block, idx) => {
+    container.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    for (let idx = 0; idx < blocks.length; idx++) {
+      const block = blocks[idx];
       const isGenesis = block.data.type === 'genesis';
       const data = block.data;
 
-      return `
-        <div class="block-card ${isGenesis ? 'genesis' : 'cad'}" style="animation-delay: ${idx * 0.06}s">
-          <div class="block-top">
-            <span class="block-num">#${block.index}</span>
-            ${isGenesis ? '<span class="block-badge genesis-badge">Genesis</span>' : `<span class="block-badge cad-badge">CAD</span>`}
-            <span class="block-time">${this.formatTime(block.timestamp)}</span>
-          </div>
+      const clone = template.content.cloneNode(true);
+      const card = clone.querySelector('.block-card');
 
-          ${!isGenesis ? `
-            <div class="block-name">${data.name || 'Untitled'}</div>
-            ${data.thumbnail ? `<div class="block-thumb"><img src="${data.thumbnail}" alt="Preview"></div>` : ''}
-            <div class="block-meta">
-              <span>📐 ${data.shapeCount || 0}개 도형</span>
-            </div>
-            <button class="load-btn" onclick="window.app.loadFromBlock(${block.index})">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              불러오기
-            </button>
-          ` : `<div class="block-genesis-text">CADChain 시작</div>`}
+      card.classList.add(isGenesis ? 'genesis' : 'cad');
+      card.style.animationDelay = `${idx * 0.06}s`;
 
-          <div class="block-hashes">
-            <div class="hash-line">
-              <span>블록</span>
-              <code>${block.hash.substring(0, 12)}…${block.hash.substring(56)}</code>
-            </div>
-            ${!isGenesis && data.drawingHash ? `
-              <div class="hash-line">
-                <span>도면</span>
-                <code>${data.drawingHash.substring(0, 12)}…${data.drawingHash.substring(56)}</code>
-              </div>
-            ` : ''}
-            <div class="hash-line">
-              <span>이전</span>
-              <code>${block.previousHash === '0' ? '0 (Genesis)' : block.previousHash.substring(0, 12) + '…' + block.previousHash.substring(56)}</code>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
+      clone.querySelector('.block-num').textContent = `#${block.index}`;
+      clone.querySelector('.block-time').textContent = this.formatTime(block.timestamp);
+
+      const badge = clone.querySelector('.block-badge');
+      badge.classList.add(isGenesis ? 'genesis-badge' : 'cad-badge');
+      badge.textContent = isGenesis ? 'Genesis' : 'CAD';
+
+      if (isGenesis) {
+        clone.querySelector('.block-content-genesis').style.display = 'block';
+      } else {
+        clone.querySelector('.block-content-cad').style.display = 'block';
+        clone.querySelector('.block-name').textContent = data.name || 'Untitled';
+        if (data.thumbnail) {
+          const thumb = clone.querySelector('.block-thumb');
+          thumb.style.display = 'block';
+          thumb.querySelector('img').src = data.thumbnail;
+          thumb.querySelector('img').alt = 'Preview';
+        }
+        clone.querySelector('.shape-count').textContent = `📐 ${data.shapeCount || 0}개 도형`;
+        clone.querySelector('.load-btn').setAttribute('onclick', `window.app.loadFromBlock(${block.index})`);
+      }
+
+      clone.querySelector('.hash-block code').textContent = `${block.hash.substring(0, 12)}…${block.hash.substring(56)}`;
+
+      if (!isGenesis && data.drawingHash) {
+        const hashDrawing = clone.querySelector('.hash-drawing');
+        hashDrawing.style.display = 'flex';
+        hashDrawing.querySelector('code').textContent = `${data.drawingHash.substring(0, 12)}…${data.drawingHash.substring(56)}`;
+      }
+
+      clone.querySelector('.hash-prev code').textContent = block.previousHash === '0' ? '0 (Genesis)' : `${block.previousHash.substring(0, 12)}…${block.previousHash.substring(56)}`;
+
+      fragment.appendChild(clone);
+    }
+
+    container.appendChild(fragment);
   }
 
   updateStats() {
