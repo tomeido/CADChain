@@ -26,16 +26,23 @@ class Block {
       this.dataStr = JSON.stringify(this.data);
     }
     const content = this.index + this.previousHash + this.timestamp + this.dataStr + this.nonce;
+
+    // 캐싱된 콘텐츠가 현재 콘텐츠와 동일하면 캐시된 해시 반환
+    if (this._cachedContent === content && this._cachedHash) {
+      return this._cachedHash;
+    }
+
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(content);
     const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const newHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    const hashArray = new Uint8Array(hashBuffer);
-    let hex = '';
-    for(let i = 0; i < hashArray.length; i++) {
-      hex += hexTable[hashArray[i]];
-    }
-    return hex;
+    // 결과 캐싱
+    this._cachedContent = content;
+    this._cachedHash = newHash;
+
+    return newHash;
   }
 
   /**

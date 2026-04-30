@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { Blockchain } from '../js/blockchain.js';
+import { Block, Blockchain } from '../js/blockchain.js';
 import crypto from 'crypto';
 
 // Polyfill crypto for node environment
@@ -66,4 +66,11 @@ describe('Blockchain', () => {
       expect(results[1].valid).toBe(false);
     });
   });
+});
+
+test('calculateHash is correct', async () => {
+  const block = new Block(1, 123456789, { test: 'data' }, 'prevhash');
+  const hash = await block.calculateHash();
+  expect(hash).toBeDefined();
+  expect(typeof hash).toBe('string');
 });
