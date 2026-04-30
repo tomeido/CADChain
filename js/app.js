@@ -289,7 +289,16 @@ class CADChainApp {
     const el = document.createElement('div');
     el.className = `notification ${type}`;
     const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-    el.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+
+    const iconSpan = document.createElement('span');
+    iconSpan.textContent = icons[type];
+
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+
+    el.appendChild(iconSpan);
+    el.appendChild(messageSpan);
+
     container.appendChild(el);
     requestAnimationFrame(() => el.classList.add('show'));
     setTimeout(() => {
