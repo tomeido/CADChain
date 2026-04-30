@@ -45,9 +45,14 @@ class CADEditor {
     this.lastMouseX = 0;
     this.lastMouseY = 0;
 
+    // Off-screen canvas cache
+    this.offscreenCanvas = document.createElement('canvas');
+    this.offscreenCtx = this.offscreenCanvas.getContext('2d');
+    this.cacheDirty = true;
+
     this.setupCanvas();
     this.bindEvents();
-    this.render();
+    this.requestRender();
   }
 
   setupCanvas() {
@@ -64,6 +69,14 @@ class CADEditor {
     this.canvas.style.width = rect.width + 'px';
     this.canvas.style.height = rect.height + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    if (this.offscreenCanvas) {
+      this.offscreenCanvas.width = this.canvas.width;
+      this.offscreenCanvas.height = this.canvas.height;
+      this.offscreenCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      this.cacheDirty = true;
+    }
+
     this.requestRender();
   }
 
@@ -115,6 +128,7 @@ class CADEditor {
 
     if (this.tool === 'select') {
       this.selectedShapeIndex = this.hitTest(pos.x, pos.y);
+      this.cacheDirty = true;
       this.render();
       return;
     }
@@ -132,6 +146,7 @@ class CADEditor {
     if (this.isPanning) {
       this.offsetX = e.clientX - this.panStartX;
       this.offsetY = e.clientY - this.panStartY;
+      this.cacheDirty = true;
       this.requestRender();
       return;
     }
@@ -225,6 +240,7 @@ class CADEditor {
     this.offsetY = my - (my - this.offsetY) * zoomFactor;
     this.scale *= zoomFactor;
     this.scale = Math.max(0.1, Math.min(5, this.scale));
+    this.cacheDirty = true;
 
     this.requestRender();
   }
@@ -282,30 +298,54 @@ class CADEditor {
     });
   }
 
-  render() {
-    const ctx = this.ctx;
+  updateCache() {
     const w = this.canvas.width / (window.devicePixelRatio || 1);
     const h = this.canvas.height / (window.devicePixelRatio || 1);
 
     // 배경
-    ctx.fillStyle = '#0d1117';
-    ctx.fillRect(0, 0, w, h);
+    this.offscreenCtx.fillStyle = '#0d1117';
+    this.offscreenCtx.fillRect(0, 0, w, h);
+
+    this.offscreenCtx.save();
+    this.offscreenCtx.translate(this.offsetX, this.offsetY);
+    this.offscreenCtx.scale(this.scale, this.scale);
+
+    const originalCtx = this.ctx;
+    this.ctx = this.offscreenCtx;
+
+    if (this.showGrid) this.drawGrid(w, h);
+
+    this.shapes.forEach((shape, idx) => {
+      if (idx !== this.selectedShapeIndex) {
+        this.drawShape(shape, false);
+      }
+    });
+
+    this.ctx = originalCtx;
+    this.offscreenCtx.restore();
+    this.cacheDirty = false;
+  }
+
+  render() {
+    if (this.cacheDirty) {
+      this.updateCache();
+    }
+
+    const ctx = this.ctx;
+    const w = this.canvas.width / (window.devicePixelRatio || 1);
+    const h = this.canvas.height / (window.devicePixelRatio || 1);
+
+    ctx.drawImage(this.offscreenCanvas, 0, 0, w, h);
 
     ctx.save();
     ctx.translate(this.offsetX, this.offsetY);
     ctx.scale(this.scale, this.scale);
 
-    // 그리드
-    if (this.showGrid) this.drawGrid(w, h);
-
-    // 도형 렌더
-    this.shapes.forEach((shape, idx) => {
-      this.drawShape(shape, idx === this.selectedShapeIndex);
-    });
+    if (this.selectedShapeIndex >= 0 && this.selectedShapeIndex < this.shapes.length) {
+      this.drawShape(this.shapes[this.selectedShapeIndex], true);
+    }
 
     ctx.restore();
-
-    // 좌표 표시
     this.drawHUD(w, h);
   }
 
@@ -513,20 +553,22 @@ class CADEditor {
 
   undo() {
     if (this.undoStack.length === 0) return;
+    this.cacheDirty = true;
     this.redoStack.push(structuredClone(this.shapes));
     this.shapes = this.undoStack.pop();
     this.selectedShapeIndex = -1;
     this.onShapesChanged();
-    this.render();
+    this.requestRender();
   }
 
   redo() {
     if (this.redoStack.length === 0) return;
+    this.cacheDirty = true;
     this.undoStack.push(structuredClone(this.shapes));
     this.shapes = this.redoStack.pop();
     this.selectedShapeIndex = -1;
     this.onShapesChanged();
-    this.render();
+    this.requestRender();
   }
 
   // ─── Tool / Settings ────────────────────────
@@ -534,6 +576,7 @@ class CADEditor {
   setTool(toolName) {
     this.tool = toolName;
     this.selectedShapeIndex = -1;
+    this.cacheDirty = true;
     this.canvas.style.cursor = toolName === 'select' ? 'default' : 'crosshair';
     this.render();
   }
@@ -552,6 +595,7 @@ class CADEditor {
 
   toggleGrid() {
     this.showGrid = !this.showGrid;
+    this.cacheDirty = true;
     this.render();
     return this.showGrid;
   }
@@ -567,6 +611,7 @@ class CADEditor {
     this.shapes = [];
     this.selectedShapeIndex = -1;
     this.onShapesChanged();
+    this.cacheDirty = true;
     this.render();
   }
 
@@ -574,6 +619,7 @@ class CADEditor {
     this.offsetX = 0;
     this.offsetY = 0;
     this.scale = 1;
+    this.cacheDirty = true;
     this.render();
   }
 
@@ -599,6 +645,7 @@ class CADEditor {
   deserialize(data) {
     if (!data || !data.shapes) return;
     this.pushUndo();
+    this.cacheDirty = true;
     this.shapes = data.shapes;
     this.selectedShapeIndex = -1;
     this.onShapesChanged();
